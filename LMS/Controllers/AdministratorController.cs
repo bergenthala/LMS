@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 using LMS.Models.LMSModels;
 using Microsoft.AspNetCore.Mvc;
 
@@ -93,9 +94,19 @@ namespace LMS.Controllers
         /// <returns>The JSON result</returns>
         public IActionResult GetProfessors(string subject)
         {
-            
-            return Json(null);
-            
+            using (LMSContext db = new LMSContext())
+            {
+                var query = from p in db.Professors
+                            where p.WorksIn == subject
+                            select new
+                            {
+                                lname = p.LName,
+                                fname = p.FName,
+                                uid = p.UId
+                            };
+
+                return Json(query.ToArray());
+            }
         }
 
 
