@@ -2,26 +2,14 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 #nullable disable
 
-using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Text;
-using System.Text.Encodings.Web;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Xml.Linq;
 using LMS.Models;
 using LMS.Models.LMSModels;
 using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.AspNetCore.WebUtilities;
-using Microsoft.Extensions.Logging;
 
 namespace LMS.Areas.Identity.Pages.Account
 {
@@ -33,6 +21,7 @@ namespace LMS.Areas.Identity.Pages.Account
         //private readonly IUserEmailStore<IdentityUser> _emailStore;
         private readonly ILogger<RegisterModel> _logger;
         private readonly LMSContext db;
+        private int uIDs;
         //private readonly IEmailSender _emailSender;
 
         public RegisterModel(
@@ -49,6 +38,7 @@ namespace LMS.Areas.Identity.Pages.Account
             _signInManager = signInManager;
             _logger = logger;
             db = _db;
+            uIDs = 0;
             //_emailSender = emailSender;
         }
 
@@ -194,7 +184,79 @@ namespace LMS.Areas.Identity.Pages.Account
         /// <returns>The uID of the new user</returns>
         string CreateNewUser( string firstName, string lastName, DateTime DOB, string departmentAbbrev, string role )
         {
-            return "unknown";
+            using(LMSContext db = new LMSContext())
+            {
+                
+                // Set uid
+                switch (role) {
+                    case "Administrator":
+                        var adminQuery = from a in db.Administrators
+                                    where a.FName == firstName && a.LName == lastName && a.Dob.Equals(DOB)
+                                    select a;
+                        if(adminQuery.SingleOrDefault() == null)
+                        {
+                            Administrator admin = new Administrator();
+                            admin.FName = firstName;
+                            admin.LName = lastName;
+                            admin.Dob = DateOnly.FromDateTime(DOB.Date);
+                            string uID = uIDs.ToString();
+                            while (uID.Length < 7)
+                            {
+                                uID = "0" + uID;
+                            }
+                            admin.UId = "u" + uID;
+                            uIDs++;
+                            db.Administrators.Add( admin );
+                            db.SaveChanges();
+                        }
+                        break;
+                    case "Professor":
+                        var profQuery = from p in db.Professors
+                                    where p.FName == firstName && p.LName == lastName && p.Dob.Equals(DOB)
+                                    select p;
+                        if (profQuery.SingleOrDefault() == null)
+                        {
+                            Professor prof = new Professor();
+                            prof.FName = firstName;
+                            prof.LName = lastName;
+                            prof.Dob = DateOnly.FromDateTime(DOB.Date);
+                            prof.WorksIn = departmentAbbrev;
+                            string uID = uIDs.ToString();
+                            while (uID.Length < 7)
+                            {
+                                uID = "0" + uID;
+                            }
+                            prof.UId = "u" + uID;
+                            uIDs++;
+                            db.Professors.Add(prof);
+                            db.SaveChanges();
+                        }
+                        break;
+                    case "Student":
+                        var studentQuery = from s in db.Students
+                                        where s.FName == firstName && s.LName == lastName && s.Dob.Equals(DOB)
+                                        select s;
+                        if (studentQuery.SingleOrDefault() == null)
+                        {
+                            Student student = new Student();
+                            student.FName = firstName;
+                            student.LName = lastName;
+                            student.Dob = DateOnly.FromDateTime(DOB.Date);
+                            student.Major = departmentAbbrev;
+                            string uID = uIDs.ToString();
+                            while(uID.Length < 7)
+                            {
+                                uID = "0" + uID;
+                            }
+                            student.UId = "u" + uID;
+                            uIDs++;
+                            db.Students.Add(student);
+                            db.SaveChanges();
+                        }
+                        break;
+                }
+            }
+            return "unknown"; // return uID
         }
 
         /*******End code to modify********/
