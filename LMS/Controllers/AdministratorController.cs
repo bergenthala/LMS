@@ -63,6 +63,10 @@ namespace LMS.Controllers
             dep.Name = name;
             db.Departments.Add(dep);
             db.SaveChanges();
+<<<<<<< Updated upstream
+=======
+
+>>>>>>> Stashed changes
             return Json(new { success = true });
         }
 
@@ -116,8 +120,26 @@ namespace LMS.Controllers
         /// <returns>A JSON object containing {success = true/false}.
         /// false if the course already exists, true otherwise.</returns>
         public IActionResult CreateCourse(string subject, int number, string name)
-        {           
-            return Json(new { success = false });
+        {
+            var query = from c in db.Courses
+                        where c.DeptId == subject && c.Number == number && c.Name == name
+                        select c;
+
+            //Returns false if the course already exists
+            if (query.SingleOrDefault() != null)
+            {
+                return Json(new { success = false });
+            }
+
+            Course newCourse = new Course();
+            newCourse.DeptId = subject;
+            newCourse.Number = (uint)number;
+            newCourse.Name = name;
+            db.Courses.Add(newCourse);
+
+            db.SaveChanges();
+
+            return Json(new { success = true });
         }
 
 
@@ -139,13 +161,38 @@ namespace LMS.Controllers
         /// a Class offering of the same Course in the same Semester,
         /// true otherwise.</returns>
         public IActionResult CreateClass(string subject, int number, string season, int year, DateTime start, DateTime end, string location, string instructor)
-        {            
-            return Json(new { success = false});
+        {
+            var query = from cl in db.Classes
+                        join co in db.Courses on cl.CId equals co.CId into rightSide
+                        from j1 in rightSide.DefaultIfEmpty()
+                        where j1.DeptId == subject && cl.CId == number && cl.SemesterSeason == season
+                        && cl.SemesterYear == year && cl.Start.ToTimeSpan() == start.TimeOfDay
+                        && cl.End.ToTimeSpan() == end.TimeOfDay && cl.Loc == location && cl.Teacher == instructor
+                        select cl;
+
+            //Returns false if the class already exists
+            if (query.SingleOrDefault() != null)
+            {
+                return Json(new { success = false });
+            }
+
+            Class newClass = new Class();
+            newClass.CId = (uint)number;
+            newClass.SemesterSeason = season;
+            newClass.SemesterYear = (ushort)year;
+            newClass.Start = TimeOnly.FromDateTime(start);
+            newClass.End = TimeOnly.FromDateTime(end);
+            newClass.Teacher = instructor;
+            newClass.Loc = location;
+
+            db.Classes.Add(newClass);
+
+            db.SaveChanges();
+
+            return Json(new { success = true });
         }
 
-
         /*******End code to modify********/
-
     }
 }
 
