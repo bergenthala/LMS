@@ -50,22 +50,20 @@ namespace LMS.Controllers
         /// false if the department already exists, true otherwise.</returns>
         public IActionResult CreateDepartment(string subject, string name)
         {
-            using (LMSContext db = new LMSContext()) {
-                var query = from d in db.Departments
-                            where d.Subject == subject && d.Name == name
-                            select d;
+            var query = from d in db.Departments
+                        where d.Subject == subject && d.Name == name
+                        select d;
 
-                if (query.SingleOrDefault() != null) 
-                {
-                    return Json(new { success = false });
-                }
-                Department dep = new Department();
-                dep.Subject = subject;
-                dep.Name = name;
-                db.Departments.Add(dep);
-                db.SaveChanges();
+            if (query.SingleOrDefault() != null) 
+            {
                 return Json(new { success = false });
             }
+            Department dep = new Department();
+            dep.Subject = subject;
+            dep.Name = name;
+            db.Departments.Add(dep);
+            db.SaveChanges();
+            return Json(new { success = true });
         }
 
 
@@ -94,19 +92,16 @@ namespace LMS.Controllers
         /// <returns>The JSON result</returns>
         public IActionResult GetProfessors(string subject)
         {
-            using (LMSContext db = new LMSContext())
-            {
-                var query = from p in db.Professors
-                            where p.WorksIn == subject
-                            select new
-                            {
-                                lname = p.LName,
-                                fname = p.FName,
-                                uid = p.UId
-                            };
+            var query = from p in db.Professors
+                        where p.WorksIn == subject
+                        select new
+                        {
+                            lname = p.LName,
+                            fname = p.FName,
+                            uid = p.UId
+                        };
 
-                return Json(query.ToArray());
-            }
+            return Json(query.ToArray());
         }
 
 

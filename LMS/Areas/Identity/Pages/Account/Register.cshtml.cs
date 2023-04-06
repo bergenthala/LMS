@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Drawing.Text;
 using System.Linq;
 using System.Text;
 using System.Text.Encodings.Web;
@@ -33,7 +34,6 @@ namespace LMS.Areas.Identity.Pages.Account
         //private readonly IUserEmailStore<IdentityUser> _emailStore;
         private readonly ILogger<RegisterModel> _logger;
         private readonly LMSContext db;
-        private int uIDs;
         //private readonly IEmailSender _emailSender;
 
         public RegisterModel(
@@ -50,7 +50,6 @@ namespace LMS.Areas.Identity.Pages.Account
             _signInManager = signInManager;
             _logger = logger;
             db = _db;
-            uIDs = 0;
             //_emailSender = emailSender;
         }
 
@@ -198,6 +197,7 @@ namespace LMS.Areas.Identity.Pages.Account
         {
             using(LMSContext db = new LMSContext())
             {
+                int uIDs = 0;
                 
                 // Set uid
                 switch (role) {
@@ -256,7 +256,7 @@ namespace LMS.Areas.Identity.Pages.Account
                             student.Dob = DateOnly.FromDateTime(DOB.Date);
                             student.Major = departmentAbbrev;
                             string uID = uIDs.ToString();
-                            while(uID.Length < 7)
+                            while (uID.Length < 7)
                             {
                                 uID = "0" + uID;
                             }
