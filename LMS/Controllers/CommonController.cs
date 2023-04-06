@@ -5,6 +5,7 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using LMS.Models.LMSModels;
 using Microsoft.AspNetCore.Mvc;
+using NuGet.Protocol;
 
 // For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -28,8 +29,18 @@ namespace LMS.Controllers
         /// </summary>
         /// <returns>The JSON array</returns>
         public IActionResult GetDepartments()
-        {            
-            return Json(null);
+        {
+            using (LMSContext db = new LMSContext())
+            {
+                var query = from d in db.Departments
+                            select new
+                            {
+                                subject = d.Subject,
+                                name = d.Name
+                            };
+                return Json(query.ToArray());
+
+            }
         }
 
 
