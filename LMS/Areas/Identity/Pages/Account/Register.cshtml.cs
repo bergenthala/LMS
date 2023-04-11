@@ -252,7 +252,7 @@ namespace LMS.Areas.Identity.Pages.Account
             int maxUid = 0;
 
             var adminQuery = (from a in db.Administrators
-                             select a.UId).Max();
+                                  select a.UId).Max();
 
             if (adminQuery != null) maxUid += int.Parse(adminQuery.Substring(1));
 

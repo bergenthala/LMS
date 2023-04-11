@@ -115,14 +115,19 @@ namespace LMS.Controllers
         /// <returns>The assignment contents</returns>
         public IActionResult GetAssignmentContents(string subject, int num, string season, int year, string category, string asgname)
         {
-            //TODO
             var query = from a in db.Assignments
+                        join ac in db.AssignmentCategories on a.AcId equals ac.AcId into rightSide
+                        from j1 in rightSide.DefaultIfEmpty()
+                        join c in db.Classes on j1.ClassId equals c.ClassId into join2
+                        from j2 in join2.DefaultIfEmpty()
+                        join co in db.Courses on j2.CId equals co.CId into join3
+                        from j3 in join3.DefaultIfEmpty()
+                        where j3.DeptId == subject && j3.Number == num && j2.SemesterSeason == season && j2.SemesterYear == year
+                        && j1.Name == category && a.Name == asgname
                         select a.Contents;
 
-
-            return Content(query.ToString());
+            return Content(query.ToString()!);
         }
-
 
         /// <summary>
         /// This method does NOT return JSON. It returns plain text (containing html).
@@ -139,10 +144,21 @@ namespace LMS.Controllers
         /// <param name="uid">The uid of the student who submitted it</param>
         /// <returns>The submission text</returns>
         public IActionResult GetSubmissionText(string subject, int num, string season, int year, string category, string asgname, string uid)
-        {            
-            return Content("");
-        }
+        {
+            var query = from s in db.Submissions
+                        join a in db.Assignments on s.AId equals a.AId
+                        join ac in db.AssignmentCategories on a.AcId equals ac.AcId into rightSide
+                        from j1 in rightSide.DefaultIfEmpty()
+                        join c in db.Classes on j1.ClassId equals c.ClassId into join2
+                        from j2 in join2.DefaultIfEmpty()
+                        join co in db.Courses on j2.CId equals co.CId into join3
+                        from j3 in join3.DefaultIfEmpty()
+                        where j3.DeptId == subject && j3.Number == num && j2.SemesterSeason == season && j2.SemesterYear == year
+                        && j1.Name == category && a.Name == asgname
+                        select s.Contents;
 
+            return Content(query.ToString()!);
+        }
 
         /// <summary>
         /// Gets information about a user as a single JSON object.
