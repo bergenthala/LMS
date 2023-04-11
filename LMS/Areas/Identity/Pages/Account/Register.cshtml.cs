@@ -210,6 +210,7 @@ namespace LMS.Areas.Identity.Pages.Account
 
                     db.Administrators.Add( admin );
                     db.SaveChanges();
+                    System.Diagnostics.Debug.WriteLine(uid);
                     return uid;
                 case "Professor":
 
@@ -250,20 +251,22 @@ namespace LMS.Areas.Identity.Pages.Account
         {
             int maxUid = 0;
 
-            var adminQuery = from a in db.Administrators
-                             select a.UId.DefaultIfEmpty().Max();
-            if (adminQuery != null) maxUid += Int32.Parse(adminQuery.ToString().Substring(1));
+            var adminQuery = (from a in db.Administrators
+                             select a.UId).Max();
 
-            var professorQuery = from a in db.Professors
-                             select a.UId.DefaultIfEmpty().Max();
+            if (adminQuery != null) maxUid += int.Parse(adminQuery.Substring(1));
 
-            if(professorQuery != null) maxUid += Int32.Parse(professorQuery.ToString().Substring(1));
+            var professorQuery = (from a in db.Professors
+                                  select a.UId).Max();
 
-            var studentQuery = from a in db.Students
-                             select a.UId.DefaultIfEmpty().Max();
+            if (professorQuery != null) maxUid += int.Parse(professorQuery.Substring(1));
 
-            if (studentQuery != null) maxUid += Int32.Parse(studentQuery.ToString().Substring(1));
+            var studentQuery = (from a in db.Students
+                                select a.UId).Max();
 
+            if (studentQuery != null) maxUid += int.Parse(studentQuery.Substring(1));
+
+            System.Diagnostics.Debug.WriteLine(maxUid + 1);
             return (maxUid + 1).ToString();
         }
 
