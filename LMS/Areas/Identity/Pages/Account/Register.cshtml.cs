@@ -255,13 +255,11 @@ namespace LMS.Areas.Identity.Pages.Account
             if (adminQuery != null) maxUid += Int32.Parse(adminQuery.ToString().Substring(1));
 
             var professorQuery = from a in db.Professors
-                             select a.UId.DefaultIfEmpty().Max();
-
+                                 select a.UId.DefaultIfEmpty().Max();
             if(professorQuery != null) maxUid += Int32.Parse(professorQuery.ToString().Substring(1));
 
             var studentQuery = from a in db.Students
-                             select a.UId.DefaultIfEmpty().Max();
-
+                               select a.UId.DefaultIfEmpty().Max();
             if (studentQuery != null) maxUid += Int32.Parse(studentQuery.ToString().Substring(1));
 
             return (maxUid + 1).ToString();
