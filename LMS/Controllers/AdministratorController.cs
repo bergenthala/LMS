@@ -63,13 +63,9 @@ namespace LMS.Controllers
             dep.Name = name;
             db.Departments.Add(dep);
             db.SaveChanges();
-<<<<<<< Updated upstream
-=======
 
->>>>>>> Stashed changes
             return Json(new { success = true });
         }
-
 
         /// <summary>
         /// Returns a JSON array of all the courses in the given department.
@@ -81,8 +77,14 @@ namespace LMS.Controllers
         /// <returns>The JSON result</returns>
         public IActionResult GetCourses(string subject)
         {
-            
-            return Json(null);
+            var query = from c in db.Courses
+                        where c.DeptId == subject
+                        select new {
+                            number = c.Number,
+                            name = c.Name
+                        };
+
+            return Json(query.ToArray());
         }
 
         /// <summary>
@@ -107,8 +109,6 @@ namespace LMS.Controllers
 
             return Json(query.ToArray());
         }
-
-
 
         /// <summary>
         /// Creates a course.
@@ -141,8 +141,6 @@ namespace LMS.Controllers
 
             return Json(new { success = true });
         }
-
-
 
         /// <summary>
         /// Creates a class offering of a given course.
