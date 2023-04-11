@@ -249,25 +249,24 @@ namespace LMS.Areas.Identity.Pages.Account
 
         string getCurrentMaxUid()
         {
-            int maxUid = 0;
+            string maxUid = "0000000";
 
             var adminQuery = (from a in db.Administrators
                                   select a.UId).Max();
 
-            if (adminQuery != null) maxUid += int.Parse(adminQuery.Substring(1));
+            if (adminQuery != null && adminQuery.CompareTo(maxUid) > 0) maxUid = adminQuery.Substring(1);
 
             var professorQuery = (from a in db.Professors
                                   select a.UId).Max();
 
-            if (professorQuery != null) maxUid += int.Parse(professorQuery.Substring(1));
+            if (professorQuery != null && professorQuery.CompareTo(maxUid) > 0) maxUid = professorQuery.Substring(1);
 
             var studentQuery = (from a in db.Students
                                 select a.UId).Max();
 
-            if (studentQuery != null) maxUid += int.Parse(studentQuery.Substring(1));
+            if (studentQuery != null && studentQuery.CompareTo(maxUid) > 0) maxUid = studentQuery.Substring(1);
 
-            System.Diagnostics.Debug.WriteLine(maxUid + 1);
-            return (maxUid + 1).ToString();
+            return (int.Parse(maxUid) + 1).ToString();
         }
 
         /*******End code to modify********/
