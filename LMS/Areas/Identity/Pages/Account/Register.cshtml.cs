@@ -195,7 +195,7 @@ namespace LMS.Areas.Identity.Pages.Account
         /// <returns>The uID of the new user</returns>
         string CreateNewUser( string firstName, string lastName, DateTime DOB, string departmentAbbrev, string role )
         {
-            string uid = getCurrentMaxUid() + 1;
+            string uid = getCurrentMaxUid();
 
             switch (role) {
                 case "Administrator":
@@ -252,19 +252,19 @@ namespace LMS.Areas.Identity.Pages.Account
 
             var adminQuery = from a in db.Administrators
                              select a.UId.DefaultIfEmpty().Max();
-            if (adminQuery != null) maxUid += Int32.Parse(adminQuery.ToString());
+            if (adminQuery != null) maxUid += Int32.Parse(adminQuery.ToString().Substring(1));
 
             var professorQuery = from a in db.Professors
                              select a.UId.DefaultIfEmpty().Max();
 
-            if(professorQuery != null) maxUid += Int32.Parse(professorQuery.ToString());
+            if(professorQuery != null) maxUid += Int32.Parse(professorQuery.ToString().Substring(1));
 
             var studentQuery = from a in db.Students
                              select a.UId.DefaultIfEmpty().Max();
 
-            if (studentQuery != null) maxUid += Int32.Parse(studentQuery.ToString());
+            if (studentQuery != null) maxUid += Int32.Parse(studentQuery.ToString().Substring(1));
 
-            return maxUid.ToString();
+            return (maxUid + 1).ToString();
         }
 
         /*******End code to modify********/
