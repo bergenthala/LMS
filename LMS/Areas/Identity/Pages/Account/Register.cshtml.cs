@@ -195,77 +195,76 @@ namespace LMS.Areas.Identity.Pages.Account
         /// <returns>The uID of the new user</returns>
         string CreateNewUser( string firstName, string lastName, DateTime DOB, string departmentAbbrev, string role )
         {
-            int uIDs = 0;
-                
-            // Set uid
+            string uid = getCurrentMaxUid() + 1;
+
             switch (role) {
                 case "Administrator":
-                    var adminQuery = from a in db.Administrators
-                                where a.FName == firstName && a.LName == lastName && a.Dob.Equals(DOB)
-                                select a;
-                    if(adminQuery.SingleOrDefault() == null)
-                    {
-                        Administrator admin = new Administrator();
-                        admin.FName = firstName;
-                        admin.LName = lastName;
-                        admin.Dob = DateOnly.FromDateTime(DOB.Date);
-                        string uID = uIDs.ToString();
-                        while (uID.Length < 7)
-                        {
-                            uID = "0" + uID;
-                        }
-                        admin.UId = "u" + uID;
-                        uIDs++;
-                        db.Administrators.Add( admin );
-                        db.SaveChanges();
-                    }
-                    break;
+                    Administrator admin = new Administrator();
+                    admin.FName = firstName;
+                    admin.LName = lastName;
+                    admin.Dob = DateOnly.FromDateTime(DOB.Date);
+
+                    while (uid.Length < 7) uid = "0" + uid;
+
+                    admin.UId = "u" + uid;
+
+                    db.Administrators.Add( admin );
+                    db.SaveChanges();
+                    return uid;
                 case "Professor":
-                    var profQuery = from p in db.Professors
-                                where p.FName == firstName && p.LName == lastName && p.Dob.Equals(DOB)
-                                select p;
-                    if (profQuery.SingleOrDefault() == null)
-                    {
-                        Professor prof = new Professor();
-                        prof.FName = firstName;
-                        prof.LName = lastName;
-                        prof.Dob = DateOnly.FromDateTime(DOB.Date);
-                        prof.WorksIn = departmentAbbrev;
-                        string uID = uIDs.ToString();
-                        while (uID.Length < 7)
-                        {
-                            uID = "0" + uID;
-                        }
-                        prof.UId = "u" + uID;
-                        uIDs++;
-                        db.Professors.Add(prof);
-                        db.SaveChanges();
-                    }
-                    break;
+
+                    Professor prof = new Professor();
+                    prof.FName = firstName;
+                    prof.LName = lastName;
+                    prof.Dob = DateOnly.FromDateTime(DOB.Date);
+                    prof.WorksIn = departmentAbbrev;
+
+                    while (uid.Length < 7) uid = "0" + uid;
+
+                    prof.UId = "u" + uid;
+
+                    db.Professors.Add(prof);
+                    db.SaveChanges();
+
+                    return uid;
                 case "Student":
-                    var studentQuery = from s in db.Students
-                                    where s.FName == firstName && s.LName == lastName && s.Dob.Equals(DOB)
-                                    select s;
-                    if (studentQuery.SingleOrDefault() == null)
-                    {
-                        Student student = new Student();
-                        student.FName = firstName;
-                        student.LName = lastName;
-                        student.Dob = DateOnly.FromDateTime(DOB.Date);
-                        student.Major = departmentAbbrev;
-                        string uID = uIDs.ToString();
-                        while (uID.Length < 7)
-                        {
-                            uID = "0" + uID;
-                        }
-                        student.UId = "u" + uID;
-                        uIDs++;
-                        db.Students.Add(student);
-                        db.SaveChanges();
-                    }
-                    break;
+                    Student student = new Student();
+                    student.FName = firstName;
+                    student.LName = lastName;
+                    student.Dob = DateOnly.FromDateTime(DOB.Date);
+                    student.Major = departmentAbbrev;
+
+                    while (uid.Length < 7) uid = "0" + uid;
+
+                    student.UId = "u" + uid;
+
+                    db.Students.Add(student);
+                    db.SaveChanges();
+                    return uid;
             }
-            return "unknown"; // return uID
+
+            return "unknown";
+        }
+
+        string getCurrentMaxUid()
+        {
+            int maxUid = 0;
+
+            var adminQuery = from a in db.Administrators
+                             select a.UId.DefaultIfEmpty().Max();
+            if (adminQuery != null) maxUid += Int32.Parse(adminQuery.ToString());
+
+            var professorQuery = from a in db.Professors
+                             select a.UId.DefaultIfEmpty().Max();
+
+            if(professorQuery != null) maxUid += Int32.Parse(professorQuery.ToString());
+
+            var studentQuery = from a in db.Students
+                             select a.UId.DefaultIfEmpty().Max();
+
+            if (studentQuery != null) maxUid += Int32.Parse(studentQuery.ToString());
+
+            return maxUid.ToString();
         }
 
         /*******End code to modify********/
