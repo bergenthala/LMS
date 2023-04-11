@@ -74,8 +74,24 @@ namespace LMS.Controllers
         /// <param name="uid">The uid of the student</param>
         /// <returns>The JSON array</returns>
         public IActionResult GetMyClasses(string uid)
-        {           
-            return Json(null);
+        {
+            var query = from e in db.Enrolleds
+                        join c in db.Classes on e.ClassId equals c.ClassId into rightSide
+                        from j1 in rightSide.DefaultIfEmpty()
+                        join co in db.Courses on j1.CId equals co.CId into nextJoin
+                        from j2 in nextJoin.DefaultIfEmpty()
+                        where e.Student == uid
+                        select new
+                        {
+                            subject = j2.DeptId,
+                            number = j2.Number,
+                            name = j2.Name,
+                            season = j1.SemesterSeason,
+                            year = j1.SemesterYear,
+                            grade = e.Grade
+                        };
+
+            return Json(query.ToArray());
         }
 
         /// <summary>
@@ -93,11 +109,28 @@ namespace LMS.Controllers
         /// <param name="uid"></param>
         /// <returns>The JSON array</returns>
         public IActionResult GetAssignmentsInClass(string subject, int num, string season, int year, string uid)
-        {            
-            return Json(null);
+        {
+            var query = from s in db.Submissions
+                        join a in db.Assignments on s.AId equals a.AId into aSide
+                        from assignJoin in aSide.DefaultIfEmpty()
+                        join ac in db.AssignmentCategories on assignJoin.AcId equals ac.AcId into rightSide
+                        from j1 in rightSide.DefaultIfEmpty()
+                        join c in db.Classes on j1.ClassId equals c.ClassId into join2
+                        from j2 in join2.DefaultIfEmpty()
+                        join co in db.Courses on j2.CId equals co.CId into join3
+                        from j3 in join3.DefaultIfEmpty()
+                        where j3.DeptId == subject && j3.Number == num && j2.SemesterSeason == season
+                        && j2.SemesterYear == year && s.Student == uid
+                        select new
+                        {
+                            aname = assignJoin.Name,
+                            cname = j1.Name,
+                            due = assignJoin.Due,
+                            score = assignJoin == null ? null : (uint?)assignJoin.Points,
+                        };
+
+            return Json(query.ToArray());
         }
-
-
 
         /// <summary>
         /// Adds a submission to the given assignment for the given student
