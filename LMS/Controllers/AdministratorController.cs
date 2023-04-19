@@ -160,22 +160,26 @@ namespace LMS.Controllers
         /// true otherwise.</returns>
         public IActionResult CreateClass(string subject, int number, string season, int year, DateTime start, DateTime end, string location, string instructor)
         {
-            var query = from cl in db.Classes
+            var classExistsQuery = from cl in db.Classes
                         join co in db.Courses on cl.CId equals co.CId into rightSide
                         from j1 in rightSide.DefaultIfEmpty()
-                        where j1.DeptId == subject && cl.CId == number && cl.SemesterSeason == season
-                        && cl.SemesterYear == year && cl.Start.ToTimeSpan() == start.TimeOfDay
-                        && cl.End.ToTimeSpan() == end.TimeOfDay && cl.Loc == location && cl.Teacher == instructor
+                        where j1.DeptId == subject && j1.Number == number && cl.SemesterSeason == season
+                        && cl.SemesterYear == year && cl.Start.Equals(start.TimeOfDay)
+                        && cl.End.Equals(end.TimeOfDay) && cl.Loc == location && cl.Teacher == instructor
                         select cl;
 
             //Returns false if the class already exists
-            if (query.SingleOrDefault() != null)
+            if (classExistsQuery.SingleOrDefault() != null)
             {
                 return Json(new { success = false });
             }
 
+            var cIDQuery = from c in db.Courses
+                           where c.Number == number
+                           select c.CId;
+
             Class newClass = new Class();
-            newClass.CId = (uint)number;
+            newClass.CId = cIDQuery.SingleOrDefault();
             newClass.SemesterSeason = season;
             newClass.SemesterYear = (ushort)year;
             newClass.Start = TimeOnly.FromDateTime(start);
