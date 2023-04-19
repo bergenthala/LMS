@@ -117,7 +117,25 @@ namespace LMS_CustomIdentity.Controllers
         /// <returns>The JSON array</returns>
         public IActionResult GetStudentsInClass(string subject, int num, string season, int year)
         {
-            return Json(null);
+            var query = from s in db.Students
+                        join e in db.Enrolleds on s.UId equals e.Student into join1
+                        from j1 in join1.DefaultIfEmpty()
+                        join c in db.Classes on j1.ClassId equals c.ClassId into join2
+                        from j2 in join2.DefaultIfEmpty()
+                        join co in db.Courses on j2.CId equals co.CId into join3
+                        from j3 in join3.DefaultIfEmpty()
+                        join d in db.Departments on j3.DeptId equals d.Subject into join4
+                        from j4 in join4.DefaultIfEmpty()
+                        where j4.Subject == subject && j3.Number == num && j2.SemesterSeason == season && j2.SemesterYear == year
+                        select new
+                        {
+                            fname = s.FName,
+                            lname = s.LName,
+                            uid = s.UId,
+                            dob = s.Dob,
+                            grade = j1.Grade
+                        };
+            return Json(query.ToArray());
         }
 
 
