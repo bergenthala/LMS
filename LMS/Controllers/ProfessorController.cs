@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 using LMS.Models.LMSModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -267,8 +268,20 @@ namespace LMS_CustomIdentity.Controllers
         /// <param name="uid">The professor's uid</param>
         /// <returns>The JSON array</returns>
         public IActionResult GetMyClasses(string uid)
-        {            
-            return Json(null);
+        {
+            var classQuery = from c in db.Classes
+                        join co in db.Courses on c.CId equals co.CId into rightSide
+                        from j1 in rightSide.DefaultIfEmpty()
+                        where c.Teacher == "u" + uid
+                        select new {
+                            subject = j1.DeptId,
+                            number = j1.Number,
+                            name = j1.Name,
+                            season = c.SemesterSeason,
+                            year = c.SemesterYear
+                        };
+
+            return Json(classQuery.ToArray());
         }
 
 
