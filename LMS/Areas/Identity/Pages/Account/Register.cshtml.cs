@@ -22,6 +22,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.WebUtilities;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.Extensions.Logging;
 
 namespace LMS.Areas.Identity.Pages.Account
@@ -252,19 +253,21 @@ namespace LMS.Areas.Identity.Pages.Account
             string maxUid = "0000000";
 
             var adminQuery = (from a in db.Administrators
-                                  select a.UId).Max();
+                              select a.UId).Max();
 
-            if (adminQuery != null && adminQuery.CompareTo(maxUid) > 0) maxUid = adminQuery.Substring(1);
+            if (adminQuery != null && adminQuery.Substring(1).CompareTo(maxUid) > 0) maxUid = adminQuery.Substring(1);
 
             var professorQuery = (from a in db.Professors
                                   select a.UId).Max();
 
-            if (professorQuery != null && professorQuery.CompareTo(maxUid) > 0) maxUid = professorQuery.Substring(1);
+            if (professorQuery != null && professorQuery.Substring(1).CompareTo(maxUid) > 0) maxUid = professorQuery.Substring(1);
 
             var studentQuery = (from a in db.Students
                                 select a.UId).Max();
 
-            if (studentQuery != null && studentQuery.CompareTo(maxUid) > 0) maxUid = studentQuery.Substring(1);
+            if (studentQuery != null && studentQuery.Substring(1).CompareTo(maxUid) > 0) maxUid = studentQuery.Substring(1);
+
+            System.Diagnostics.Debug.WriteLine("The max id for the new user is: " + maxUid);
 
             return (int.Parse(maxUid) + 1).ToString();
         }
