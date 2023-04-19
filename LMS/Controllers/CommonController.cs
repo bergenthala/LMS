@@ -89,7 +89,7 @@ namespace LMS.Controllers
                         join p in db.Professors on cl.Teacher equals p.UId into rightSide
                         from j1 in rightSide.DefaultIfEmpty()
                         select new {
-                            subject = cl.SemesterSeason,
+                            season = cl.SemesterSeason,
                             year = cl.SemesterYear,
                             location = cl.Loc,
                             start = cl.Start, 

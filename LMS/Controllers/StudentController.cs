@@ -213,8 +213,23 @@ namespace LMS.Controllers
         /// <param name="uid">The uid of the student</param>
         /// <returns>A JSON object containing a single field called "gpa" with the number value</returns>
         public IActionResult GetGPA(string uid)
-        {            
-            return Json(null);
+        {
+            var query = from co in db.Courses
+                        join c in db.Classes on co.CId equals c.CId into join1
+                        from j1 in join1.DefaultIfEmpty()
+                        join e in db.Enrolleds on j1.ClassId equals e.ClassId into join2
+                        from j2 in join2.DefaultIfEmpty()
+                        where j2.Student == uid
+                        select new
+                        {
+                            gpa = j2.Grade
+                        };
+            switch (query.ToString())
+            {
+                case "A":
+                    return Json(4.0);
+            }
+            return Json(query);
         }
                 
         /*******End code to modify********/

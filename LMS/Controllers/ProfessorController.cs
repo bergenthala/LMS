@@ -159,7 +159,24 @@ namespace LMS_CustomIdentity.Controllers
         /// <returns>The JSON array</returns>
         public IActionResult GetAssignmentsInCategory(string subject, int num, string season, int year, string category)
         {
-            return Json(null);
+            var query = from a in db.Assignments
+                        join ac in db.AssignmentCategories on a.AcId equals ac.AcId into join1
+                        from j1 in join1.DefaultIfEmpty()
+                        join c in db.Classes on j1.ClassId equals c.ClassId into join2
+                        from j2 in join2.DefaultIfEmpty()
+                        join co in db.Courses on j2.CId equals co.CId into join3
+                        from j3 in join3.DefaultIfEmpty()
+                        join d in db.Departments on j3.DeptId equals d.Subject into join4
+                        from j4 in join4.DefaultIfEmpty()
+                        where j4.Subject == subject && j3.Number == num && j2.SemesterSeason == season && j2.SemesterYear == year && j1.Name == category
+                        select new
+                        {
+                            aname = a.Name,
+                            cname = j1.Name,
+                            due = a.Due,
+                            submissions = a.Submissions
+                        };
+            return Json(query.ToArray());
         }
 
 
@@ -211,7 +228,37 @@ namespace LMS_CustomIdentity.Controllers
         /// <returns>A JSON object containing success = true/false</returns>
         public IActionResult CreateAssignment(string subject, int num, string season, int year, string category, string asgname, int asgpoints, DateTime asgdue, string asgcontents)
         {
-            return Json(new { success = false });
+            var query = from a in db.Assignments
+                        join ac in db.AssignmentCategories on a.AcId equals ac.AcId into join1
+                        from j1 in join1.DefaultIfEmpty()
+                        join c in db.Classes on j1.ClassId equals c.ClassId into join2
+                        from j2 in join2.DefaultIfEmpty()
+                        join co in db.Courses on j2.CId equals co.CId into join3
+                        from j3 in join3.DefaultIfEmpty()
+                        join d in db.Departments on j3.DeptId equals d.Subject into join4
+                        from j4 in join4.DefaultIfEmpty()
+                        where j4.Subject == subject && j3.Number == num && j2.SemesterSeason == season && j2.SemesterYear == year && j1.Name == category && a.Name == asgname
+                        && a.Points == asgpoints && a.Due == asgdue && a.Contents == asgcontents
+                        select a;
+
+            if(query.SingleOrDefault() != null)
+            {
+                return Json(new { success = false });
+            }
+
+            Assignment assignment = new Assignment();
+            var acid = from a in db.Assignments
+                       join ac in db.AssignmentCategories on a.AcId equals ac.AcId into join1
+                       from j1 in join1.DefaultIfEmpty()
+                       where j1.Name == category
+                       select j1.AcId;
+            assignment.AcId = acid.SingleOrDefault();
+            assignment.Points = (uint)asgpoints;
+            assignment.Name = asgname;
+            assignment.Due = asgdue;
+            assignment.Contents = asgcontents;
+
+            return Json(new { success = true });
         }
 
 
