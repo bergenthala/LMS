@@ -212,7 +212,7 @@ namespace LMS.Areas.Identity.Pages.Account
                     db.Administrators.Add( admin );
                     db.SaveChanges();
                     System.Diagnostics.Debug.WriteLine(uid);
-                    return uid;
+                    return "u" + uid;
                 case "Professor":
 
                     Professor prof = new Professor();
@@ -228,7 +228,7 @@ namespace LMS.Areas.Identity.Pages.Account
                     db.Professors.Add(prof);
                     db.SaveChanges();
 
-                    return uid;
+                    return "u" + uid;
                 case "Student":
                     Student student = new Student();
                     student.FName = firstName;
@@ -242,7 +242,7 @@ namespace LMS.Areas.Identity.Pages.Account
 
                     db.Students.Add(student);
                     db.SaveChanges();
-                    return uid;
+                    return "u" + uid;
             }
 
             return "unknown";

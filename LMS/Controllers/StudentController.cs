@@ -167,8 +167,36 @@ namespace LMS.Controllers
         /// <returns>A JSON object containing {success = {true/false}. 
         /// false if the student is already enrolled in the class, true otherwise.</returns>
         public IActionResult Enroll(string subject, int num, string season, int year, string uid)
-        {          
-            return Json(new { success = false});
+        {
+            var query = from co in db.Courses
+                        join c in db.Classes on co.CId equals c.CId into join1
+                        from j1 in join1.DefaultIfEmpty()
+                        join e in db.Enrolleds on j1.ClassId equals e.ClassId into join2
+                        from j2 in join2.DefaultIfEmpty()
+                        join s in db.Students on j2.Student equals s.UId into join3
+                        from j3 in join3.DefaultIfEmpty()
+                        where co.DeptId == subject && co.Number == num && j1.SemesterSeason == season && j1.SemesterYear == year && j2.Student == uid
+                        select j3;
+
+            if (query.SingleOrDefault() != null)
+            {
+                return Json(new { success = false });
+            }
+
+            Enrolled enrolled = new Enrolled();
+            enrolled.Student = uid;
+            var classID = from co in db.Courses
+                          join c in db.Classes on co.CId equals c.CId into join1
+                          from j1 in join1.DefaultIfEmpty()
+                          where co.DeptId == subject && co.Number == num && j1.SemesterSeason == season && j1.SemesterYear == year
+                          select j1.ClassId;
+            enrolled.ClassId = classID.SingleOrDefault();
+            enrolled.Grade = "--";
+
+            db.Enrolleds.Add(enrolled);
+            db.SaveChanges();
+
+            return Json(new { success = true });
         }
 
 
