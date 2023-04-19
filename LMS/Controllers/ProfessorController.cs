@@ -272,7 +272,7 @@ namespace LMS_CustomIdentity.Controllers
             var classQuery = from c in db.Classes
                         join co in db.Courses on c.CId equals co.CId into rightSide
                         from j1 in rightSide.DefaultIfEmpty()
-                        where c.Teacher == "u" + uid
+                        where c.Teacher == uid
                         select new {
                             subject = j1.DeptId,
                             number = j1.Number,

@@ -80,7 +80,7 @@ namespace LMS.Controllers
                         from j1 in rightSide.DefaultIfEmpty()
                         join co in db.Courses on j1.CId equals co.CId into nextJoin
                         from j2 in nextJoin.DefaultIfEmpty()
-                        where e.Student == "u" + uid
+                        where e.Student == uid
                         select new
                         {
                             subject = j2.DeptId,
@@ -120,7 +120,7 @@ namespace LMS.Controllers
                         join co in db.Courses on j2.CId equals co.CId into join3
                         from j3 in join3.DefaultIfEmpty()
                         where j3.DeptId == subject && j3.Number == num && j2.SemesterSeason == season
-                        && j2.SemesterYear == year && s.Student == "u" + uid
+                        && j2.SemesterYear == year && s.Student == uid
                         select new
                         {
                             aname = assignJoin.Name,
