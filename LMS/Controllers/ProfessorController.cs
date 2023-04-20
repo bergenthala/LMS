@@ -195,7 +195,18 @@ namespace LMS_CustomIdentity.Controllers
         /// <returns>The JSON array</returns>
         public IActionResult GetAssignmentCategories(string subject, int num, string season, int year)
         {
-            return Json(null);
+            var query = from ac in db.AssignmentCategories
+                        join c in db.Classes on ac.ClassId equals c.ClassId into join1
+                        from j1 in join1.DefaultIfEmpty()
+                        join co in db.Courses on j1.CId equals co.CId into join2
+                        from j2 in join2.DefaultIfEmpty()
+                        where j2.DeptId == subject && j2.Number == num && j1.SemesterSeason == season && j1.SemesterYear == year
+                        select new
+                        {
+                            name = ac.Name,
+                            weight = ac.Weight
+                        };
+            return Json(query.ToArray());
         }
 
         /// <summary>
