@@ -7,6 +7,7 @@ using System.Xml.Linq;
 using LMS.Models.LMSModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 // For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -216,20 +217,26 @@ namespace LMS_CustomIdentity.Controllers
                         join co in db.Courses on j1.CId equals co.CId into join2
                         from j2 in join2.DefaultIfEmpty()
                         where j2.DeptId == subject && j2.Number == num && j1.SemesterSeason == season && j1.SemesterYear == year
-                        select j1.ClassId;
+                        select j1;
 
-            if(query.SingleOrDefault() != 0)
+            if(query.SingleOrDefault() != null)
             {
                 return Json(new { success = false });
             }
 
+            var classIDQuery = from c in db.Classes
+                           join co in db.Courses on c.CId equals co.CId into join1
+                           from j1 in join1.DefaultIfEmpty()
+                           where j1.Number == num && c.SemesterSeason == season && c.SemesterYear == year && j1.DeptId == subject
+                           select c.ClassId;
+
             AssignmentCategory assignmentCategory = new AssignmentCategory();
-            assignmentCategory.ClassId = query.SingleOrDefault();
+            assignmentCategory.ClassId = classIDQuery.SingleOrDefault();
             assignmentCategory.Weight = (byte)catweight;
             assignmentCategory.Name = category;
             db.AssignmentCategories.Add(assignmentCategory);
             db.SaveChanges();
-            return Json(new { success = false });
+            return Json(new { success = true });
         }
 
         /// <summary>
