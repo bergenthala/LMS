@@ -332,7 +332,7 @@ namespace LMS_CustomIdentity.Controllers
                         from j5 in join5.DefaultIfEmpty()
                         join st in db.Students on j5.Student equals st.UId into join6
                         from j6 in join6.DefaultIfEmpty()
-                        where j3.SemesterSeason == season && j3.SemesterYear == year && j4.DeptId == subject && j2.Name == category && j1.Name == asgname
+                        where j3.SemesterSeason == season && j3.SemesterYear == year && j4.DeptId == subject && j2.Name == category && j1.Name == asgname && j4.Number == num
                         select new
                         {
                             fname = j6.FName,
@@ -377,14 +377,11 @@ namespace LMS_CustomIdentity.Controllers
 
             if (query.SingleOrDefault() != null)
             {
-                Submission submission = query.SingleOrDefault()!;
-                if (submission != null)
-                {
-                    submission.Score = (uint)score;
-                    db.Submissions.Update(submission);
-                    db.SaveChanges();
-                    return Json(new { success = true });
-                }
+                Submission submission = query.Single();
+                submission.Score = (uint)score;
+                db.Submissions.Update(submission);
+                db.SaveChanges();
+                return Json(new { success = true });
             }
             return Json(new { success = false });
         }
