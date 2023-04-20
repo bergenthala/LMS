@@ -249,26 +249,43 @@ namespace LMS.Controllers
         /// <returns>A JSON object containing a single field called "gpa" with the number value</returns>
         public IActionResult GetGPA(string uid)
         {
+            Dictionary<string, double> gradeToValue = new Dictionary<string, double>
+            {
+                {"A", 4.0},
+                {"A-", 3.7},
+                {"B+", 3.3},
+                {"B", 3.0},
+                {"B-", 2.7},
+                {"C+", 2.3},
+                {"C", 2.0},
+                {"C-", 1.7},
+                {"D+", 1.3},
+                {"D", 1.0},
+                {"E", 0.0}
+            };
             var query = from co in db.Courses
                         join c in db.Classes on co.CId equals c.CId into join1
                         from j1 in join1.DefaultIfEmpty()
                         join e in db.Enrolleds on j1.ClassId equals e.ClassId into join2
                         from j2 in join2.DefaultIfEmpty()
-                        where j2.Student == uid
+                        where j2.Student == uid && j2.Grade != "--"
                         select new
                         {
-                            gpa = j2.Grade
+                            grade = j2.Grade
                         };
-            switch (query.ToString())
+
+            if (query.Any())
             {
-                case "A":
-                    return Json(4.0);
+                var grades = query.ToList();
+                double avgGrade = grades.Average(x => gradeToValue[x.grade]);
+                return Json(new { gpa = avgGrade });
             }
-            return Json(query);
+            return Json(new { gpa = 0.0 });
         }
-                
+
+
         /*******End code to modify********/
 
-        }
     }
+}
 

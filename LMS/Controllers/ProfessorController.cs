@@ -169,7 +169,7 @@ namespace LMS_CustomIdentity.Controllers
                         from j3 in join3.DefaultIfEmpty()
                         join d in db.Departments on j3.DeptId equals d.Subject into join4
                         from j4 in join4.DefaultIfEmpty()
-                        where j4.Subject == subject && j3.Number == num && j2.SemesterSeason == season && j2.SemesterYear == year && j1.Name == category
+                        where j4.Subject == subject && j3.Number == num && j2.SemesterSeason == season && j2.SemesterYear == year && category == null ? true : j1.Name == category
                         select new
                         {
                             aname = a.Name,
