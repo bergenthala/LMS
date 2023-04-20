@@ -137,6 +137,7 @@ namespace LMS_CustomIdentity.Controllers
                             dob = s.Dob,
                             grade = j1.Grade
                         };
+
             return Json(query.ToArray());
         }
 
@@ -328,9 +329,7 @@ namespace LMS_CustomIdentity.Controllers
                         from j3 in join3.DefaultIfEmpty()
                         join co in db.Courses on j3.CId equals co.CId into join4
                         from j4 in join4.DefaultIfEmpty()
-                        join e in db.Enrolleds on j3.ClassId equals e.ClassId into join5
-                        from j5 in join5.DefaultIfEmpty()
-                        join st in db.Students on j5.Student equals st.UId into join6
+                        join st in db.Students on s.Student equals st.UId into join6
                         from j6 in join6.DefaultIfEmpty()
                         where j3.SemesterSeason == season && j3.SemesterYear == year && j4.DeptId == subject && j2.Name == category && j1.Name == asgname && j4.Number == num
                         select new
@@ -341,6 +340,7 @@ namespace LMS_CustomIdentity.Controllers
                             time = s.Time,
                             score = s.Score
                         };
+
             return Json(query.ToArray());
         }
 
