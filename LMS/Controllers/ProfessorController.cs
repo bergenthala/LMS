@@ -224,7 +224,7 @@ namespace LMS_CustomIdentity.Controllers
             }
 
             AssignmentCategory assignmentCategory = new AssignmentCategory();
-           // assignmentCategory.ClassId = (uint)query;
+            assignmentCategory.ClassId = query.SingleOrDefault();
             assignmentCategory.Weight = (byte)catweight;
             assignmentCategory.Name = category;
             db.AssignmentCategories.Add(assignmentCategory);
