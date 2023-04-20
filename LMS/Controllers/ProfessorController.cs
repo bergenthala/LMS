@@ -178,6 +178,7 @@ namespace LMS_CustomIdentity.Controllers
                             due = a.Due,
                             submissions = a.Submissions.Count()
                         };
+
             return Json(query.ToArray());
         }
 
@@ -207,6 +208,7 @@ namespace LMS_CustomIdentity.Controllers
                             name = ac.Name,
                             weight = ac.Weight
                         };
+
             return Json(query.ToArray());
         }
 
@@ -246,8 +248,10 @@ namespace LMS_CustomIdentity.Controllers
             assignmentCategory.ClassId = classIDQuery.SingleOrDefault();
             assignmentCategory.Weight = (byte)catweight;
             assignmentCategory.Name = category;
+
             db.AssignmentCategories.Add(assignmentCategory);
             db.SaveChanges();
+
             return Json(new { success = true });
         }
 
@@ -281,7 +285,6 @@ namespace LMS_CustomIdentity.Controllers
                 return Json(new { success = false });
             }
 
-            Assignment assignment = new Assignment();
             var acid = from asc in db.AssignmentCategories
                        join c in db.Classes on asc.ClassId equals c.ClassId into join1
                        from j1 in join1.DefaultIfEmpty()
@@ -289,11 +292,14 @@ namespace LMS_CustomIdentity.Controllers
                        from j2 in join2.DefaultIfEmpty()
                        where asc.Name == category && j1.SemesterSeason == season && j1.SemesterYear == year && j2.Number == num && j2.DeptId == subject
                        select asc.AcId;
+
+            Assignment assignment = new Assignment();
             assignment.AcId = acid.SingleOrDefault();
             assignment.Points = (uint)asgpoints;
             assignment.Name = asgname;
             assignment.Due = asgdue;
             assignment.Contents = asgcontents;
+
             db.Assignments.Add(assignment);
             db.SaveChanges();
 
@@ -368,21 +374,23 @@ namespace LMS_CustomIdentity.Controllers
                         from j3 in join3.DefaultIfEmpty()
                         join co in db.Courses on j3.CId equals co.CId into join4
                         from j4 in join4.DefaultIfEmpty()
-                        join e in db.Enrolleds on j3.ClassId equals e.ClassId into join5
-                        from j5 in join5.DefaultIfEmpty()
-                        join st in db.Students on j5.Student equals st.UId into join6
+                        join st in db.Students on s.Student equals st.UId into join6
                         from j6 in join6.DefaultIfEmpty()
-                        where j4.Number == num && j3.SemesterSeason == season && j3.SemesterYear == year && j4.DeptId == subject && j2.Name == category && j1.Name == asgname && j6.UId == uid
+                        where j3.SemesterSeason == season && j3.SemesterYear == year && j4.DeptId == subject && j2.Name == category && j1.Name == asgname 
+                        && j4.Number == num && s.Student == uid
                         select s;
 
             if (query.SingleOrDefault() != null)
             {
                 Submission submission = query.Single();
                 submission.Score = (uint)score;
+                
                 db.Submissions.Update(submission);
                 db.SaveChanges();
+
                 return Json(new { success = true });
             }
+
             return Json(new { success = false });
         }
 
