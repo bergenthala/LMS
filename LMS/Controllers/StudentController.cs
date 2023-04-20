@@ -110,26 +110,25 @@ namespace LMS.Controllers
         /// <returns>The JSON array</returns>
         public IActionResult GetAssignmentsInClass(string subject, int num, string season, int year, string uid)
         {
-            var query = from s in db.Submissions
-                        join a in db.Assignments on s.AId equals a.AId into aSide
-                        from assignJoin in aSide.DefaultIfEmpty()
-                        join ac in db.AssignmentCategories on assignJoin.AcId equals ac.AcId into rightSide
-                        from j1 in rightSide.DefaultIfEmpty()
-                        join c in db.Classes on j1.ClassId equals c.ClassId into join2
-                        from j2 in join2.DefaultIfEmpty()
-                        join co in db.Courses on j2.CId equals co.CId into join3
-                        from j3 in join3.DefaultIfEmpty()
-                        where j3.DeptId == subject && j3.Number == num && j2.SemesterSeason == season
-                        && j2.SemesterYear == year && s.Student == uid
-                        select new
-                        {
-                            aname = assignJoin.Name,
-                            cname = j1.Name,
-                            due = assignJoin.Due,
-                            score = assignJoin == null ? null : (uint?)assignJoin.Points,
-                        };
+            var assignmentsQuery = from a in db.Assignments
+                                   join ac in db.AssignmentCategories on a.AcId equals ac.AcId into rightSide
+                                   from j1 in rightSide.DefaultIfEmpty()
+                                   join c in db.Classes on j1.ClassId equals c.ClassId into join2
+                                   from j2 in join2.DefaultIfEmpty()
+                                   join co in db.Courses on j2.CId equals co.CId into join3
+                                   from j3 in join3.DefaultIfEmpty()
+                                   where j3.DeptId == subject && j3.Number == num && j2.SemesterSeason == season
+                                   && j2.SemesterYear == year
+                                   select new {
+                                       aname = a.Name,
+                                       cname = j1.Name,
+                                       due = a.Due,
+                                       score = (from s in db.Submissions
+                                                where s.Student == uid && s.AId == a.AId
+                                                select s.Score).SingleOrDefault()
+                                   };
 
-            return Json(query.ToArray());
+            return Json(assignmentsQuery.ToArray());
         }
 
         /// <summary>
@@ -153,25 +152,21 @@ namespace LMS.Controllers
           string category, string asgname, string uid, string contents)
         {
             var aIDQuery = from a in db.Assignments
-                           join aca in db.AssignmentCategories on a.AcId equals aca.AcId into assignCats
-                           from ac in assignCats.DefaultIfEmpty()
-                           join cl in db.Classes on ac.ClassId equals cl.ClassId into rightSide
-                           from c in rightSide.DefaultIfEmpty()
-                           join cou in db.Courses on c.ClassId equals cou.CId into join1
-                           from co in join1.DefaultIfEmpty()
-                           where co.DeptId == subject && co.Number == num && c.SemesterSeason == season && c.SemesterYear == year
-                           && ac.Name == category && a.Name == asgname
+                           join ac in db.AssignmentCategories on a.AcId equals ac.AcId into rightSide
+                           from j1 in rightSide.DefaultIfEmpty()
+                           join c in db.Classes on j1.ClassId equals c.ClassId into join2
+                           from j2 in join2.DefaultIfEmpty()
+                           join co in db.Courses on j2.CId equals co.CId into join3
+                           from j3 in join3.DefaultIfEmpty()
+                           where j3.DeptId == subject && j3.Number == num && j2.SemesterSeason == season
+                           && j2.SemesterYear == year
                            select a.AId;
 
-            //Is true if there is no assignment id found using the method parameters.
-            if (aIDQuery.SingleOrDefault() == 0) {
-                System.Diagnostics.Debug.WriteLine("There was a bad query");
-                return Json(new { success = false });
-            }
+            System.Diagnostics.Debug.WriteLine("The aID of the assignment is: " + aIDQuery.SingleOrDefault());
 
-            var resubmissionQuery = from a in db.Assignments
-                                    where a.AId == aIDQuery.SingleOrDefault()
-                                    select a;
+            var resubmissionQuery = from s in db.Submissions
+                                    where s.AId == aIDQuery.SingleOrDefault()
+                                    select s;
 
             Submission newSubmission = new Submission();
             newSubmission.Time = DateTime.Now;
