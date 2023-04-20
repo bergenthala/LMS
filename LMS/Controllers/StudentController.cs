@@ -162,27 +162,29 @@ namespace LMS.Controllers
                            && j2.SemesterYear == year
                            select a.AId;
 
-            System.Diagnostics.Debug.WriteLine("The aID of the assignment is: " + aIDQuery.SingleOrDefault());
-
             var resubmissionQuery = from s in db.Submissions
                                     where s.AId == aIDQuery.SingleOrDefault()
                                     select s;
 
             Submission newSubmission = new Submission();
-            newSubmission.Time = DateTime.Now;
-            newSubmission.Contents = contents;
-
-            if (resubmissionQuery.DefaultIfEmpty() == null) {
-                db.Submissions.Update(newSubmission);
-                db.SaveChanges();
-                return Json(new { success = true });
-            }
-
             newSubmission.Student = uid;
-            newSubmission.Score = 0;
+            newSubmission.Contents = contents;
             newSubmission.AId = aIDQuery.SingleOrDefault();
 
+            if (resubmissionQuery.SingleOrDefault() != null) {
+                System.Diagnostics.Debug.WriteLine(resubmissionQuery.Single().Score);
+
+                newSubmission.Score = resubmissionQuery.Single().Score;
+                newSubmission.Time = resubmissionQuery.Single().Time;
+                db.Submissions.Remove(resubmissionQuery.Single());
+
+            } else {
+                newSubmission.Score = 0;
+                newSubmission.Time = DateTime.Now;
+            }
+
             db.Submissions.Add(newSubmission);
+
             db.SaveChanges();
 
             return Json(new { success = true });
