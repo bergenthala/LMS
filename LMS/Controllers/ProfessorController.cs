@@ -210,6 +210,25 @@ namespace LMS_CustomIdentity.Controllers
         /// <returns>A JSON object containing {success = true/false} </returns>
         public IActionResult CreateAssignmentCategory(string subject, int num, string season, int year, string category, int catweight)
         {
+            var query = from ac in db.AssignmentCategories
+                        join c in db.Classes on ac.ClassId equals c.ClassId into join1
+                        from j1 in join1.DefaultIfEmpty()
+                        join co in db.Courses on j1.CId equals co.CId into join2
+                        from j2 in join2.DefaultIfEmpty()
+                        where j2.DeptId == subject && j2.Number == num && j1.SemesterSeason == season && j1.SemesterYear == year
+                        select j1.ClassId;
+
+            if(query.SingleOrDefault() != 0)
+            {
+                return Json(new { success = false });
+            }
+
+            AssignmentCategory assignmentCategory = new AssignmentCategory();
+           // assignmentCategory.ClassId = (uint)query;
+            assignmentCategory.Weight = (byte)catweight;
+            assignmentCategory.Name = category;
+            db.AssignmentCategories.Add(assignmentCategory);
+            db.SaveChanges();
             return Json(new { success = false });
         }
 
@@ -281,7 +300,29 @@ namespace LMS_CustomIdentity.Controllers
         /// <returns>The JSON array</returns>
         public IActionResult GetSubmissionsToAssignment(string subject, int num, string season, int year, string category, string asgname)
         {
-            return Json(null);
+            var query = from s in db.Submissions
+                        join a in db.Assignments on s.AId equals a.AId into join1
+                        from j1 in join1.DefaultIfEmpty()
+                        join ac in db.AssignmentCategories on j1.AcId equals ac.AcId into join2
+                        from j2 in join2.DefaultIfEmpty()
+                        join c in db.Classes on j2.ClassId equals c.ClassId into join3
+                        from j3 in join3.DefaultIfEmpty()
+                        join co in db.Courses on j3.CId equals co.CId into join4
+                        from j4 in join4.DefaultIfEmpty()
+                        join e in db.Enrolleds on j3.ClassId equals e.ClassId into join5
+                        from j5 in join5.DefaultIfEmpty()
+                        join st in db.Students on j5.Student equals st.UId into join6
+                        from j6 in join6.DefaultIfEmpty()
+                        where j3.SemesterSeason == season && j3.SemesterYear == year && j4.DeptId == subject && j2.Name == category && j1.Name == asgname
+                        select new
+                        {
+                            fname = j6.FName,
+                            lname = j6.LName,
+                            uid = j6.UId,
+                            time = s.Time,
+                            score = s.Score
+                        };
+            return Json(query.ToArray());
         }
 
 
@@ -299,6 +340,33 @@ namespace LMS_CustomIdentity.Controllers
         /// <returns>A JSON object containing success = true/false</returns>
         public IActionResult GradeSubmission(string subject, int num, string season, int year, string category, string asgname, string uid, int score)
         {
+            var query = from s in db.Submissions
+                        join a in db.Assignments on s.AId equals a.AId into join1
+                        from j1 in join1.DefaultIfEmpty()
+                        join ac in db.AssignmentCategories on j1.AcId equals ac.AcId into join2
+                        from j2 in join2.DefaultIfEmpty()
+                        join c in db.Classes on j2.ClassId equals c.ClassId into join3
+                        from j3 in join3.DefaultIfEmpty()
+                        join co in db.Courses on j3.CId equals co.CId into join4
+                        from j4 in join4.DefaultIfEmpty()
+                        join e in db.Enrolleds on j3.ClassId equals e.ClassId into join5
+                        from j5 in join5.DefaultIfEmpty()
+                        join st in db.Students on j5.Student equals st.UId into join6
+                        from j6 in join6.DefaultIfEmpty()
+                        where j4.Number == num && j3.SemesterSeason == season && j3.SemesterYear == year && j4.DeptId == subject && j2.Name == category && j1.Name == asgname && j6.UId == uid
+                        select s;
+
+            if (query.SingleOrDefault() != null)
+            {
+                Submission submission = (Submission)query;
+                if (submission != null)
+                {
+                    submission.Score = (uint)score;
+                    db.Submissions.Update(submission);
+                    db.SaveChanges();
+                    return Json(new { success = true });
+                }
+            }
             return Json(new { success = false });
         }
 
