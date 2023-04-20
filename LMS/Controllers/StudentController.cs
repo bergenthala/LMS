@@ -159,7 +159,7 @@ namespace LMS.Controllers
                            join co in db.Courses on j2.CId equals co.CId into join3
                            from j3 in join3.DefaultIfEmpty()
                            where j3.DeptId == subject && j3.Number == num && j2.SemesterSeason == season
-                           && j2.SemesterYear == year
+                           && j2.SemesterYear == year && a.Name == asgname && j1.Name == category
                            select a.AId;
 
             var resubmissionQuery = from s in db.Submissions

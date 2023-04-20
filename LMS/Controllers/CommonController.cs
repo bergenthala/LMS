@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography.Xml;
 using System.Text.Json;
 using System.Threading.Tasks;
 using LMS.Models.LMSModels;
@@ -55,17 +56,18 @@ namespace LMS.Controllers
         /// <returns>The JSON array</returns>
         public IActionResult GetCatalog()
         {
-            var query = from c in db.Courses
-                        join d in db.Departments on c.DeptId equals d.Subject into rightSide
-                        from j1 in rightSide.DefaultIfEmpty()
+            var query = from d in db.Departments
                         select new {
-                            subject = c.DeptId,
-                            dname = j1.Name,
-                            courses = new {
-                                number = c.Number,
-                                cname = c.Name
+                            subject = d.Subject,
+                            dname = d.Name,
+                            courses = from co in d.Courses
+                            select new {
+                                number = co.Number,
+                                cname = co.Name
                             }
                         };
+
+
             return Json(query.ToArray());
         }
 
@@ -86,8 +88,11 @@ namespace LMS.Controllers
         public IActionResult GetClassOfferings(string subject, int number)
         {
             var query = from cl in db.Classes
-                        join p in db.Professors on cl.Teacher equals p.UId into rightSide
-                        from j1 in rightSide.DefaultIfEmpty()
+                        join p in db.Professors on cl.Teacher equals p.UId into join1
+                        from j1 in join1.DefaultIfEmpty()
+                        join co in db.Courses on cl.CId equals co.CId into join2
+                        from j2 in join2.DefaultIfEmpty()
+                        where j2.DeptId == subject && j2.Number == number
                         select new {
                             season = cl.SemesterSeason,
                             year = cl.SemesterYear,
@@ -157,7 +162,11 @@ namespace LMS.Controllers
                         && j1.Name == category && a.Name == asgname && s.Student == uid
                         select s.Contents;
 
-            return Content(query.SingleOrDefault()!);
+            if(query.Any())
+            {
+                return Content(query.Single());
+            }
+            return Content("");
         }
 
         /// <summary>
@@ -185,7 +194,7 @@ namespace LMS.Controllers
                                  lname = a.LName,
                                  uid = a.UId
                              };
-            if (adminQuery.SingleOrDefault() != null) return Json(adminQuery);
+            if (adminQuery.SingleOrDefault() != null) return Json(adminQuery.Single());
 
             var professorQuery = from p in db.Professors
                              where p.UId == uid
@@ -195,7 +204,7 @@ namespace LMS.Controllers
                                  uid = p.UId,
                                  department = p.WorksIn
                              };
-            if (professorQuery.SingleOrDefault() != null) return Json(professorQuery);
+            if (professorQuery.SingleOrDefault() != null) return Json(professorQuery.Single());
 
             var studentQuery = from s in db.Students
                                  where s.UId == uid
@@ -205,7 +214,7 @@ namespace LMS.Controllers
                                      uid = s.UId,
                                      department = s.Major
                                  };
-            if (studentQuery.SingleOrDefault() != null) return Json(studentQuery);
+            if (studentQuery.SingleOrDefault() != null) return Json(studentQuery.Single());
 
             return Json(new { success = false });
         }
