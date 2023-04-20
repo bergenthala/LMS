@@ -163,7 +163,7 @@ namespace LMS.Controllers
                            select a.AId;
 
             var resubmissionQuery = from s in db.Submissions
-                                    where s.AId == aIDQuery.SingleOrDefault()
+                                    where s.AId == aIDQuery.SingleOrDefault() && s.Student == uid
                                     select s;
 
             Submission newSubmission = new Submission();
@@ -172,12 +172,10 @@ namespace LMS.Controllers
             newSubmission.AId = aIDQuery.SingleOrDefault();
 
             if (resubmissionQuery.SingleOrDefault() != null) {
-                System.Diagnostics.Debug.WriteLine(resubmissionQuery.Single().Score);
-
                 newSubmission.Score = resubmissionQuery.Single().Score;
                 newSubmission.Time = resubmissionQuery.Single().Time;
-                db.Submissions.Remove(resubmissionQuery.Single());
 
+                db.Submissions.Remove(resubmissionQuery.Single());
             } else {
                 newSubmission.Score = 0;
                 newSubmission.Time = DateTime.Now;
