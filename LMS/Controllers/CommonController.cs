@@ -126,7 +126,7 @@ namespace LMS.Controllers
                         && j1.Name == category && a.Name == asgname
                         select a.Contents;
 
-            return Content(query.ToString()!);
+            return Content(query.SingleOrDefault()!);
         }
 
         /// <summary>
@@ -157,7 +157,7 @@ namespace LMS.Controllers
                         && j1.Name == category && a.Name == asgname
                         select s.Contents;
 
-            return Content(query.ToString()!);
+            return Content(query.SingleOrDefault()!);
         }
 
         /// <summary>

@@ -175,7 +175,7 @@ namespace LMS_CustomIdentity.Controllers
                             aname = a.Name,
                             cname = j1.Name,
                             due = a.Due,
-                            submissions = a.Submissions
+                            submissions = a.Submissions.Count()
                         };
             return Json(query.ToArray());
         }
@@ -227,7 +227,7 @@ namespace LMS_CustomIdentity.Controllers
                         from j1 in join1.DefaultIfEmpty()
                         join co in db.Courses on j1.CId equals co.CId into join2
                         from j2 in join2.DefaultIfEmpty()
-                        where j2.DeptId == subject && j2.Number == num && j1.SemesterSeason == season && j1.SemesterYear == year
+                        where j2.DeptId == subject && j2.Number == num && j1.SemesterSeason == season && j1.SemesterYear == year && ac.Name == category
                         select j1;
 
             if(query.SingleOrDefault() != null)
@@ -272,10 +272,7 @@ namespace LMS_CustomIdentity.Controllers
                         from j2 in join2.DefaultIfEmpty()
                         join co in db.Courses on j2.CId equals co.CId into join3
                         from j3 in join3.DefaultIfEmpty()
-                        join d in db.Departments on j3.DeptId equals d.Subject into join4
-                        from j4 in join4.DefaultIfEmpty()
-                        where j4.Subject == subject && j3.Number == num && j2.SemesterSeason == season && j2.SemesterYear == year && j1.Name == category && a.Name == asgname
-                        && a.Points == asgpoints && a.Due == asgdue && a.Contents == asgcontents
+                        where j3.DeptId == subject && j3.Number == num && j2.SemesterSeason == season && j2.SemesterYear == year && j1.Name == category && a.Name == asgname
                         select a;
 
             if(query.SingleOrDefault() != null)
@@ -284,16 +281,20 @@ namespace LMS_CustomIdentity.Controllers
             }
 
             Assignment assignment = new Assignment();
-            var acid = from a in db.Assignments
-                       join ac in db.AssignmentCategories on a.AcId equals ac.AcId into join1
+            var acid = from asc in db.AssignmentCategories
+                       join c in db.Classes on asc.ClassId equals c.ClassId into join1
                        from j1 in join1.DefaultIfEmpty()
-                       where j1.Name == category
-                       select j1.AcId;
+                       join co in db.Courses on j1.CId equals co.CId into join2
+                       from j2 in join2.DefaultIfEmpty()
+                       where asc.Name == category && j1.SemesterSeason == season && j1.SemesterYear == year && j2.Number == num && j2.DeptId == subject
+                       select asc.AcId;
             assignment.AcId = acid.SingleOrDefault();
             assignment.Points = (uint)asgpoints;
             assignment.Name = asgname;
             assignment.Due = asgdue;
             assignment.Contents = asgcontents;
+            db.Assignments.Add(assignment);
+            db.SaveChanges();
 
             return Json(new { success = true });
         }
