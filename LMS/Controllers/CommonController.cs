@@ -185,7 +185,7 @@ namespace LMS.Controllers
                                  lname = a.LName,
                                  uid = a.UId
                              };
-            if(adminQuery != null) return Json(adminQuery.ToArray());
+            if (adminQuery.SingleOrDefault() != null) return Json(adminQuery);
 
             var professorQuery = from p in db.Professors
                              where p.UId == uid
@@ -195,7 +195,7 @@ namespace LMS.Controllers
                                  uid = p.UId,
                                  department = p.WorksIn
                              };
-            if (professorQuery != null) return Json(professorQuery.ToArray());
+            if (professorQuery.SingleOrDefault() != null) return Json(professorQuery);
 
             var studentQuery = from s in db.Students
                                  where s.UId == uid
@@ -205,7 +205,7 @@ namespace LMS.Controllers
                                      uid = s.UId,
                                      department = s.Major
                                  };
-            if (studentQuery != null) return Json(studentQuery.ToArray());
+            if (studentQuery.SingleOrDefault() != null) return Json(studentQuery);
 
             return Json(new { success = false });
         }
