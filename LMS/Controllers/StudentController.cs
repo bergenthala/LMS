@@ -151,8 +151,46 @@ namespace LMS.Controllers
         /// <returns>A JSON object containing {success = true/false}</returns>
         public IActionResult SubmitAssignmentText(string subject, int num, string season, int year,
           string category, string asgname, string uid, string contents)
-        {           
-            return Json(new { success = false });
+        {
+            var aIDQuery = from a in db.Assignments
+                           join aca in db.AssignmentCategories on a.AcId equals aca.AcId into assignCats
+                           from ac in assignCats.DefaultIfEmpty()
+                           join cl in db.Classes on ac.ClassId equals cl.ClassId into rightSide
+                           from c in rightSide.DefaultIfEmpty()
+                           join cou in db.Courses on c.ClassId equals cou.CId into join1
+                           from co in join1.DefaultIfEmpty()
+                           where co.DeptId == subject && co.Number == num && c.SemesterSeason == season && c.SemesterYear == year
+                           && ac.Name == category && a.Name == asgname
+                           select a.AId;
+
+            //Is true if there is no assignment id found using the method parameters.
+            if (aIDQuery.SingleOrDefault() == 0) {
+                System.Diagnostics.Debug.WriteLine("There was a bad query");
+                return Json(new { success = false });
+            }
+
+            var resubmissionQuery = from a in db.Assignments
+                                    where a.AId == aIDQuery.SingleOrDefault()
+                                    select a;
+
+            Submission newSubmission = new Submission();
+            newSubmission.Time = DateTime.Now;
+            newSubmission.Contents = contents;
+
+            if (resubmissionQuery.DefaultIfEmpty() == null) {
+                db.Submissions.Update(newSubmission);
+                db.SaveChanges();
+                return Json(new { success = true });
+            }
+
+            newSubmission.Student = uid;
+            newSubmission.Score = 0;
+            newSubmission.AId = aIDQuery.SingleOrDefault();
+
+            db.Submissions.Add(newSubmission);
+            db.SaveChanges();
+
+            return Json(new { success = true });
         }
 
 
@@ -234,6 +272,6 @@ namespace LMS.Controllers
                 
         /*******End code to modify********/
 
+        }
     }
-}
 
