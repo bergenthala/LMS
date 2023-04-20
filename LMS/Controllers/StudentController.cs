@@ -259,14 +259,14 @@ namespace LMS.Controllers
                 {"C-", 1.7},
                 {"D+", 1.3},
                 {"D", 1.0},
-                {"F", 0.0}
+                {"E", 0.0}
             };
             var query = from co in db.Courses
                         join c in db.Classes on co.CId equals c.CId into join1
                         from j1 in join1.DefaultIfEmpty()
                         join e in db.Enrolleds on j1.ClassId equals e.ClassId into join2
                         from j2 in join2.DefaultIfEmpty()
-                        where j2.Student == uid
+                        where j2.Student == uid && j2.Grade != "--"
                         select new
                         {
                             grade = j2.Grade
@@ -274,7 +274,8 @@ namespace LMS.Controllers
 
             if (query.Any())
             {
-                double avgGrade = query.Average(x => gradeToValue[x.grade]);
+                var grades = query.ToList();
+                double avgGrade = grades.Average(x => gradeToValue[x.grade]);
                 return Json(new { gpa = avgGrade });
             }
             return Json(new { gpa = 0.0 });
