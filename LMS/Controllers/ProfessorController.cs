@@ -377,7 +377,7 @@ namespace LMS_CustomIdentity.Controllers
 
             if (query.SingleOrDefault() != null)
             {
-                Submission submission = (Submission)query;
+                Submission submission = query.SingleOrDefault()!;
                 if (submission != null)
                 {
                     submission.Score = (uint)score;
