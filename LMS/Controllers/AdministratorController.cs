@@ -160,15 +160,31 @@ namespace LMS.Controllers
         /// true otherwise.</returns>
         public IActionResult CreateClass(string subject, int number, string season, int year, DateTime start, DateTime end, string location, string instructor)
         {
+            System.Diagnostics.Debug.WriteLine("zzzzzzzzz");
+
             var classExistsQuery = from cl in db.Classes
                                    join co in db.Courses on cl.CId equals co.CId into rightSide
                                    from j1 in rightSide.DefaultIfEmpty()
-                                   where cl.SemesterSeason == season && cl.Teacher == instructor
-                                   select cl;
+                                   where cl.SemesterSeason == season
+                                   select j1;
 
             //Returns false if the class already exists
-            if (classExistsQuery.DefaultIfEmpty() != null)
-            {
+            if (classExistsQuery.DefaultIfEmpty() != null) {
+                System.Diagnostics.Debug.WriteLine("The class already exists");
+                return Json(new { success = false });
+            }
+
+            var classConflictsQuery = from cl in db.Classes
+                                      join co in db.Courses on cl.CId equals co.CId into rightSide
+                                      from j1 in rightSide.DefaultIfEmpty()
+                                      where cl.SemesterSeason == season && cl.Teacher == instructor && cl.Loc == location 
+                                      && (cl.Start >= TimeOnly.FromDateTime(start) && cl.End <= TimeOnly.FromDateTime(end))
+                                      select cl;
+
+            //Returns false if there is a class conflict
+            if (classConflictsQuery.DefaultIfEmpty() != null) {
+                System.Diagnostics.Debug.WriteLine("The class conflicts");
+
                 return Json(new { success = false });
             }
 
