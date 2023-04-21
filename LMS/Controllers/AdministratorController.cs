@@ -160,29 +160,29 @@ namespace LMS.Controllers
         /// true otherwise.</returns>
         public IActionResult CreateClass(string subject, int number, string season, int year, DateTime start, DateTime end, string location, string instructor)
         {
-            System.Diagnostics.Debug.WriteLine("zzzzzzzzz");
-
+            // Checks if a class exists for a course during a specific semester
             var classExistsQuery = from cl in db.Classes
                                    join co in db.Courses on cl.CId equals co.CId into rightSide
                                    from j1 in rightSide.DefaultIfEmpty()
-                                   where cl.SemesterSeason == season
-                                   select j1;
+                                   where cl.SemesterSeason == season && cl.SemesterYear == year && j1.DeptId == subject && j1.Number == number
+                                   select cl;
 
             //Returns false if the class already exists
-            if (classExistsQuery.DefaultIfEmpty() != null) {
+            if (classExistsQuery.SingleOrDefault() != null) {
                 System.Diagnostics.Debug.WriteLine("The class already exists");
                 return Json(new { success = false });
             }
 
+            // Check if another class exists in the same semester with the same location and time
             var classConflictsQuery = from cl in db.Classes
                                       join co in db.Courses on cl.CId equals co.CId into rightSide
                                       from j1 in rightSide.DefaultIfEmpty()
-                                      where cl.SemesterSeason == season && cl.Teacher == instructor && cl.Loc == location 
+                                      where cl.SemesterSeason == season && cl.SemesterYear == year 
                                       && (cl.Start >= TimeOnly.FromDateTime(start) && cl.End <= TimeOnly.FromDateTime(end))
                                       select cl;
 
             //Returns false if there is a class conflict
-            if (classConflictsQuery.DefaultIfEmpty() != null) {
+            if (classConflictsQuery.SingleOrDefault() != null) {
                 System.Diagnostics.Debug.WriteLine("The class conflicts");
 
                 return Json(new { success = false });
