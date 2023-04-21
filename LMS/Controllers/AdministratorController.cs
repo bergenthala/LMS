@@ -169,7 +169,6 @@ namespace LMS.Controllers
 
             //Returns false if the class already exists
             if (classExistsQuery.SingleOrDefault() != null) {
-                System.Diagnostics.Debug.WriteLine("The class already exists");
                 return Json(new { success = false });
             }
 
@@ -177,19 +176,18 @@ namespace LMS.Controllers
             var classConflictsQuery = from cl in db.Classes
                                       join co in db.Courses on cl.CId equals co.CId into rightSide
                                       from j1 in rightSide.DefaultIfEmpty()
-                                      where cl.SemesterSeason == season && cl.SemesterYear == year 
-                                      && (cl.Start >= TimeOnly.FromDateTime(start) && cl.End <= TimeOnly.FromDateTime(end))
+                                      where cl.SemesterSeason == season && cl.SemesterYear == year && cl.Loc == location
+                                      && ((TimeOnly.FromDateTime(start) >= cl.Start && TimeOnly.FromDateTime(start) <= cl.End) 
+                                      || (TimeOnly.FromDateTime(end) >= cl.Start && TimeOnly.FromDateTime(end) <= cl.End))
                                       select cl;
 
             //Returns false if there is a class conflict
             if (classConflictsQuery.SingleOrDefault() != null) {
-                System.Diagnostics.Debug.WriteLine("The class conflicts");
-
                 return Json(new { success = false });
             }
 
             var cIDQuery = from c in db.Courses
-                           where c.Number == number
+                           where c.Number == number && c.DeptId == subject
                            select c.CId;
 
             Class newClass = new Class();
