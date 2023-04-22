@@ -267,8 +267,6 @@ namespace LMS.Areas.Identity.Pages.Account
 
             if (studentQuery != null && studentQuery.Substring(1).CompareTo(maxUid) > 0) maxUid = studentQuery.Substring(1);
 
-            System.Diagnostics.Debug.WriteLine("The max id for the new user is: " + maxUid);
-
             return (int.Parse(maxUid) + 1).ToString();
         }
 
