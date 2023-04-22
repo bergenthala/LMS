@@ -481,7 +481,7 @@ namespace LMS_CustomIdentity.Controllers
                              from j3 in join3.DefaultIfEmpty()
                              join enr in db.Enrolleds on j3.ClassId equals enr.ClassId into join4
                              from j4 in join4.DefaultIfEmpty()
-                             where j4.Student == uid && j4.ClassId == classID && j2.AcId == category.AcId
+                             where j4.Student == uid && j4.ClassId == classID && j2.AcId == category.AcId && s.Student ==uid
                              select s;
 
                
@@ -522,7 +522,7 @@ namespace LMS_CustomIdentity.Controllers
             }
 
             // Calculate scaling factor
-            uint scalingFactor = 100 / totalWeight;
+            double scalingFactor = 100.0 / totalWeight;
 
             // Calculate the percentage the student earned in the class
             totalScore *= scalingFactor;
