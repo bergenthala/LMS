@@ -167,7 +167,7 @@ namespace LMS_CustomIdentity.Controllers
                         from j2 in join2.DefaultIfEmpty()
                         join co in db.Courses on j2.CId equals co.CId into join3
                         from j3 in join3.DefaultIfEmpty()
-                        where j3.DeptId == subject && j3.Number == num && j2.SemesterSeason == season && j2.SemesterYear == year && category == null ? true : j1.Name == category
+                        where (j3.DeptId == subject && j3.Number == num && j2.SemesterSeason == season && j2.SemesterYear == year) && (category == null ? true : j1.Name == category)
                         select new
                         {
                             aname = a.Name,
@@ -448,19 +448,30 @@ namespace LMS_CustomIdentity.Controllers
             return Json(classQuery.ToArray());
         }
 
+        /// <summary>
+        /// Private Helper method for Updating the Students Grade in Enrolled
+        /// </summary>
+        /// <param name="uid"> The students uid</param>
+        /// <param name="classID"> The classID of the Class </param>
         private void UpdateStudentGrade(string uid, uint classID)
         {
+            // Get all the assignment categories for the Class with classID
             var asgcat = from ac in db.AssignmentCategories
                          where ac.ClassId == classID
                          select ac;
 
-
+            // Set up variables for total weight and score
             uint totalWeight = 0;
             double totalScore = 0;
+
+            // Loop over all the categories from the asgcat query
             foreach (var category in asgcat.ToArray()) {
+
+                // Set up variables for total points and max points in the category
                 uint totalPoints = 0;
                 uint maxPoints = 0;
 
+                // Perform a query that returns all the submissions with the uID, classID, and same acID as the current category
                 var sQuery = from s in db.Submissions
                              join a in db.Assignments on s.AId equals a.AId into join1
                              from j1 in join1.DefaultIfEmpty()
@@ -474,33 +485,38 @@ namespace LMS_CustomIdentity.Controllers
                              select s;
 
                
-
-                //Calculate totalPoints and MaxPoints
+                // Loop over all submission from the sQuery query
                 foreach (var submission in sQuery.ToArray())
                 {
                     totalPoints += submission.Score;
                 }
 
+                // Perform a query to get all the assignments with classID and same acID as the current category
                 var asgs = from a in db.Assignments
                            join ac in db.AssignmentCategories on a.AcId equals ac.AcId into join1
                            from j1 in join1.DefaultIfEmpty()
                            where j1.ClassId == classID && j1.AcId == category.AcId
                            select a;
 
+                // Loop over all the assigments in asgs query
                 foreach (var asg in asgs.ToArray())
                 {
                     maxPoints += asg.Points;
                 }
+
+                // If maxPoints for a category is equal to 0 simply continue to the next category
                 if(maxPoints == 0)
                 {
                     continue;
                 }
 
+                // Calculate the newGrade percentage 
                 double newGrade = (double)totalPoints / maxPoints;
 
                 // Calculate category weight
                 newGrade *= category.Weight;
 
+                // increment score and weight
                 totalScore += newGrade;
                 totalWeight += category.Weight;
             }
