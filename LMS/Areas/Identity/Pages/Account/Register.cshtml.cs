@@ -211,7 +211,6 @@ namespace LMS.Areas.Identity.Pages.Account
 
                     db.Administrators.Add( admin );
                     db.SaveChanges();
-                    System.Diagnostics.Debug.WriteLine(uid);
                     return "u" + uid;
                 case "Professor":
 
