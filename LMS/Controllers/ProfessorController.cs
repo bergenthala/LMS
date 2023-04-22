@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text.Json;
 using System.Threading.Tasks;
 using System.Xml.Linq;
@@ -141,8 +142,6 @@ namespace LMS_CustomIdentity.Controllers
             return Json(query.ToArray());
         }
 
-
-
         /// <summary>
         /// Returns a JSON array with all the assignments in an assignment category for a class.
         /// If the "category" parameter is null, return all assignments in the class.
@@ -161,27 +160,41 @@ namespace LMS_CustomIdentity.Controllers
         /// <returns>The JSON array</returns>
         public IActionResult GetAssignmentsInCategory(string subject, int num, string season, int year, string category)
         {
-            var query = from a in db.Assignments
+
+            var assignmentsQuery = from co in db.Courses
+                                   join cl in db.Classes on co.CId equals cl.CId into join1
+                                   from c in join1.DefaultIfEmpty()
+                                   join acg in db.AssignmentCategories on c.ClassId equals acg.ClassId into join2
+                                   from ac in join2.DefaultIfEmpty()
+                                   join asn in db.Assignments on ac.AcId equals asn.AcId into join3
+                                   from a in join3.DefaultIfEmpty()
+                                   where co.DeptId == subject && co.Number == num && c.SemesterSeason == season && c.SemesterYear == year && category == null ? true : ac.Name == category
+                                   select new {
+                                       aname = a.Name,
+                                       cname = ac.Name,
+                                       due = a.Due,
+                                       submissions = a.Submissions.Count()
+                                   };
+
+
+/*            var query = from a in db.Assignments
                         join ac in db.AssignmentCategories on a.AcId equals ac.AcId into join1
                         from j1 in join1.DefaultIfEmpty()
                         join c in db.Classes on j1.ClassId equals c.ClassId into join2
                         from j2 in join2.DefaultIfEmpty()
                         join co in db.Courses on j2.CId equals co.CId into join3
                         from j3 in join3.DefaultIfEmpty()
-                        join d in db.Departments on j3.DeptId equals d.Subject into join4
-                        from j4 in join4.DefaultIfEmpty()
-                        where j4.Subject == subject && j3.Number == num && j2.SemesterSeason == season && j2.SemesterYear == year && category == null ? true : j1.Name == category
+                        where j3.DeptId == subject && j3.Number == num && j2.SemesterSeason == season && j2.SemesterYear == year && category == null ? true : j1.Name == category
                         select new
                         {
                             aname = a.Name,
                             cname = j1.Name,
                             due = a.Due,
                             submissions = a.Submissions.Count()
-                        };
+                        };*/
 
-            return Json(query.ToArray());
+            return Json(assignmentsQuery.ToArray());
         }
-
 
         /// <summary>
         /// Returns a JSON array of the assignment categories for a certain class.
@@ -303,6 +316,19 @@ namespace LMS_CustomIdentity.Controllers
             db.Assignments.Add(assignment);
             db.SaveChanges();
 
+            //Updates the grades of all students in the class
+            var studentsInClassQuery = from co in db.Courses
+                                       join cl in db.Classes on co.CId equals cl.CId into join1
+                                       from c in join1.DefaultIfEmpty()
+                                       join en in db.Enrolleds on c.ClassId equals en.ClassId into join2
+                                       from e in join2.DefaultIfEmpty()
+                                       where co.Number == num && co.DeptId == subject && c.SemesterSeason == season && c.SemesterYear == year
+                                       select e;
+
+            foreach(var student in studentsInClassQuery) {
+                UpdateStudentGrade(student.Student);
+            }
+
             return Json(new { success = true });
         }
 
@@ -380,6 +406,7 @@ namespace LMS_CustomIdentity.Controllers
                         && j4.Number == num && s.Student == uid
                         select s;
 
+            //Checks if there was an assignment found to be graded
             if (query.SingleOrDefault() != null)
             {
                 Submission submission = query.Single();
@@ -387,6 +414,8 @@ namespace LMS_CustomIdentity.Controllers
                 
                 db.Submissions.Update(submission);
                 db.SaveChanges();
+
+                UpdateStudentGrade(uid);
 
                 return Json(new { success = true });
             }
@@ -423,8 +452,12 @@ namespace LMS_CustomIdentity.Controllers
             return Json(classQuery.ToArray());
         }
 
-
         
+        private void UpdateStudentGrade(string uid) {
+            System.Diagnostics.Debug.WriteLine("The uid being updated is: " + uid);
+
+        }
+
         /*******End code to modify********/
     }
 }

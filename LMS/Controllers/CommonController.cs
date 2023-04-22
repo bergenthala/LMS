@@ -40,6 +40,7 @@ namespace LMS.Controllers
                             name = d.Name,
                             subject = d.Subject,
                         };
+
             return Json(query.ToArray());
         }
 
@@ -66,7 +67,6 @@ namespace LMS.Controllers
                                 cname = co.Name
                             }
                         };
-
 
             return Json(query.ToArray());
         }
@@ -166,6 +166,7 @@ namespace LMS.Controllers
             {
                 return Content(query.Single());
             }
+
             return Content("");
         }
 

@@ -58,6 +58,7 @@ namespace LMS.Controllers
             {
                 return Json(new { success = false });
             }
+
             Department dep = new Department();
             dep.Subject = subject;
             dep.Name = name;
