@@ -160,24 +160,7 @@ namespace LMS_CustomIdentity.Controllers
         /// <returns>The JSON array</returns>
         public IActionResult GetAssignmentsInCategory(string subject, int num, string season, int year, string category)
         {
-
-            var assignmentsQuery = from co in db.Courses
-                                   join cl in db.Classes on co.CId equals cl.CId into join1
-                                   from c in join1.DefaultIfEmpty()
-                                   join acg in db.AssignmentCategories on c.ClassId equals acg.ClassId into join2
-                                   from ac in join2.DefaultIfEmpty()
-                                   join asn in db.Assignments on ac.AcId equals asn.AcId into join3
-                                   from a in join3.DefaultIfEmpty()
-                                   where co.DeptId == subject && co.Number == num && c.SemesterSeason == season && c.SemesterYear == year && category == null ? true : ac.Name == category
-                                   select new {
-                                       aname = a.Name,
-                                       cname = ac.Name,
-                                       due = a.Due,
-                                       submissions = a.Submissions.Count()
-                                   };
-
-
-/*            var query = from a in db.Assignments
+            var query = from a in db.Assignments
                         join ac in db.AssignmentCategories on a.AcId equals ac.AcId into join1
                         from j1 in join1.DefaultIfEmpty()
                         join c in db.Classes on j1.ClassId equals c.ClassId into join2
@@ -191,9 +174,9 @@ namespace LMS_CustomIdentity.Controllers
                             cname = j1.Name,
                             due = a.Due,
                             submissions = a.Submissions.Count()
-                        };*/
+                        };
 
-            return Json(assignmentsQuery.ToArray());
+            return Json(query.ToArray());
         }
 
         /// <summary>
@@ -316,6 +299,7 @@ namespace LMS_CustomIdentity.Controllers
             db.Assignments.Add(assignment);
             db.SaveChanges();
 
+
             //Updates the grades of all students in the class
             var studentsInClassQuery = from co in db.Courses
                                        join cl in db.Classes on co.CId equals cl.CId into join1
@@ -325,8 +309,14 @@ namespace LMS_CustomIdentity.Controllers
                                        where co.Number == num && co.DeptId == subject && c.SemesterSeason == season && c.SemesterYear == year
                                        select e;
 
-            foreach(var student in studentsInClassQuery) {
-                UpdateStudentGrade(student.Student);
+            var classID = from c in db.Classes
+                          join co in db.Courses on c.CId equals co.CId into join1
+                          from j1 in join1.DefaultIfEmpty()
+                          where j1.Number == num && c.SemesterSeason == season && c.SemesterYear == year && j1.DeptId == subject
+                          select c;
+
+            foreach (var student in studentsInClassQuery.ToArray()) {
+                UpdateStudentGrade(student.Student, classID.Single().ClassId);
             }
 
             return Json(new { success = true });
@@ -415,7 +405,13 @@ namespace LMS_CustomIdentity.Controllers
                 db.Submissions.Update(submission);
                 db.SaveChanges();
 
-                UpdateStudentGrade(uid);
+                var classID = from c in db.Classes
+                              join co in db.Courses on c.CId equals co.CId into join1
+                              from j1 in join1.DefaultIfEmpty()
+                              where j1.Number == num && c.SemesterSeason == season && c.SemesterYear == year && j1.DeptId == subject
+                              select c;
+
+                UpdateStudentGrade(uid, classID.Single().ClassId);
 
                 return Json(new { success = true });
             }
@@ -452,9 +448,102 @@ namespace LMS_CustomIdentity.Controllers
             return Json(classQuery.ToArray());
         }
 
-        
-        private void UpdateStudentGrade(string uid) {
-            System.Diagnostics.Debug.WriteLine("The uid being updated is: " + uid);
+        private void UpdateStudentGrade(string uid, uint classID)
+        {
+            var asgcat = from ac in db.AssignmentCategories
+                         where ac.ClassId == classID
+                         select ac;
+
+
+            uint totalWeight = 0;
+            uint totalScore = 0;
+            foreach (var category in asgcat.ToArray()) {
+                uint totalPoints = 0;
+                uint maxPoints = 0;
+
+                var sQuery = from s in db.Submissions
+                             join a in db.Assignments on s.AId equals a.AId into join1
+                             from j1 in join1.DefaultIfEmpty()
+                             join ac in db.AssignmentCategories on j1.AcId equals ac.AcId into join2
+                             from j2 in join2.DefaultIfEmpty()
+                             join c in db.Classes on j2.ClassId equals c.ClassId into join3
+                             from j3 in join3.DefaultIfEmpty()
+                             join enr in db.Enrolleds on j3.ClassId equals enr.ClassId into join4
+                             from j4 in join4.DefaultIfEmpty()
+                             where j4.Student == uid && j4.ClassId == classID && j2.AcId == category.AcId
+                             select s;
+
+               
+
+                //Calculate totalPoints and MaxPoints
+                foreach (var submission in sQuery.ToArray())
+                {
+                    totalPoints += submission.Score;
+                }
+
+                var asgs = from a in db.Assignments
+                           join ac in db.AssignmentCategories on a.AcId equals ac.AcId into join1
+                           from j1 in join1.DefaultIfEmpty()
+                           where j1.ClassId == classID && j1.AcId == category.AcId
+                           select a;
+
+                foreach (var asg in asgs.ToArray())
+                {
+                    maxPoints += asg.Points;
+                }
+                if(maxPoints == 0)
+                {
+                    continue;
+                }
+
+                uint newGrade = totalPoints / maxPoints;
+
+                // Calculate category weight
+                newGrade *= category.Weight;
+
+                totalScore += newGrade;
+                totalWeight += category.Weight;
+            }
+
+            // Calculate scaling factor
+            uint scalingFactor = 100 / totalWeight;
+
+            // Calculate the percentage the student earned in the class
+            totalScore *= scalingFactor;
+
+            Dictionary<double, string> valueToGrade = new Dictionary<double, string>
+            {
+                {4.0, "A"},
+                {3.7, "A-"},
+                {3.3, "B+"},
+                {3.0, "B"},
+                {2.7, "B-"},
+                {2.3, "C+"},
+                {2.0, "C"},
+                {1.7, "C-"},
+                {1.3, "D+"},
+                {1.0, "D"},
+                {0.0, "E"}
+            };
+
+            string finalGrade = "";
+            foreach(KeyValuePair<double, string> grade in valueToGrade)
+            {
+                if(totalScore >= grade.Key)
+                {
+                    finalGrade = grade.Value;
+                    break;
+                }
+            }
+
+            var enrolledClass = from en in db.Enrolleds
+                                where en.ClassId == classID && en.Student == uid
+                                select en;
+            Enrolled e = enrolledClass.Single();
+            e.Grade = finalGrade;
+
+            db.Enrolleds.Update(e);
+            db.SaveChanges();
 
         }
 
